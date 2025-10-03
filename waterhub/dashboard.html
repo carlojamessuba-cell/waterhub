@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Station Dashboard</title>
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background: #f4f6f8;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #344876;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .sidebar a:hover {
+            background: #2b365e;
+        }
+
+        .sidebar a i {
+            margin-right: 10px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        header {
+            background: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 22px;
+            color: #344876;
+        }
+
+        header a {
+            background: #344876;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .card i {
+            font-size: 40px;
+            color: #344876;
+            margin-bottom: 10px;
+        }
+
+        .card h3 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo" style="text-align:center; margin-bottom:20px;">
+            <img src="water hub.jpeg" alt="Water Hub Logo" style="width:120px; border-radius:8px;">
+        </div>
+        <h2 style="text-align:center; font-size:16px; margin-bottom:15px;">Water Hub Purified Drinking Water</h2>
+        <a href="#" id="dashboard-link"><i class='bx bx-home'></i> Dashboard</a>
+        <a href="#" id="customers-link"><i class='bx bx-user'></i> Customers</a>
+        <a href="#" id="refills-link"><i class='bx bx-water'></i> Refills</a>
+        <a href="#" id="inventory-link"><i class='bx bx-package'></i> Inventory</a>
+        <a href="#" id="reports-link"><i class='bx bx-bar-chart'></i> Reports</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="content">
+        <header>
+            <h1>Welcome, User 👋</h1>
+            <a href="#" onclick="logout()">Logout</a>
+        </header>
+        <div id="page-content">
+            <div class="cards">
+                <div class="card"><i class='bx bx-user'></i>
+                    <h3>Total Customers</h3>
+                    <p>120</p>
+                </div>
+                <div class="card"><i class='bx bx-water'></i>
+                    <h3>Total Refills</h3>
+                    <p>350</p>
+                </div>
+                <div class="card"><i class='bx bx-package'></i>
+                    <h3>Available Stocks</h3>
+                    <p>80</p>
+                </div>
+                <div class="card"><i class='bx bx-money'></i>
+                    <h3>Total Sales</h3>
+                    <p>₱12,500</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAcpiqVl2aT6N04WYAte8SEnY2Aaz96OUI",
+            authDomain: "waterhub-cf0f4.firebaseapp.com",
+            projectId: "waterhub-cf0f4",
+            storageBucket: "waterhub-cf0f4.firebasestorage.app",
+            messagingSenderId: "808595204229",
+            appId: "1:808595204229:web:daeaad23fb70ea362ce1ec"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Check logged-in user
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                await loadUserInfo(user.uid);
+            }
+        });
+
+        // Load user name
+        async function loadUserInfo(uid) {
+            try {
+                const ref = doc(db, "users", uid);
+                const snapshot = await getDoc(ref);
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    document.querySelector("header h1").textContent = `Welcome, ${data.firstname} 👋`;
+                }
+            } catch (err) {
+                console.error("Error loading user info:", err);
+            }
+        }
+
+        // Logout
+        window.logout = function () {
+            signOut(auth).then(() => {
+                window.location.href = "index.html";
+            });
+        }
+
+        // Load different sections
+        function loadSection(section) {
+            const pageContent = document.getElementById("page-content");
+
+            if (section === "dashboard") {
+                pageContent.innerHTML = `
+                <div class="cards">
+                    <div class="card"><i class='bx bx-user'></i><h3>Total Customers</h3><p>120</p></div>
+                    <div class="card"><i class='bx bx-water'></i><h3>Total Refills</h3><p>350</p></div>
+                    <div class="card"><i class='bx bx-package'></i><h3>Available Stocks</h3><p>80</p></div>
+                    <div class="card"><i class='bx bx-money'></i><h3>Total Sales</h3><p>₱12,500</p></div>
+                </div>`;
+            }
+            if (section === "customers") {
+                pageContent.innerHTML = `
+                <h2>👥 Customers</h2>
+                <p>List of all customers will appear here.</p>`;
+            }
+            if (section === "refills") {
+                pageContent.innerHTML = `
+                <h2>💧 Refills</h2>
+                <p>Refill transactions go here.</p>`;
+            }
+            if (section === "inventory") {
+                pageContent.innerHTML = `
+                <h2>📦 Inventory</h2>
+                <p>Current stock details here.</p>`;
+            }
+            if (section === "reports") {
+                pageContent.innerHTML = `
+                <h2>📊 Reports</h2>
+                <p>Analytics and sales reports here.</p>`;
+            }
+        }
+
+        // Event listeners
+        document.getElementById("dashboard-link").addEventListener("click", () => loadSection("dashboard"));
+        document.getElementById("customers-link").addEventListener("click", () => loadSection("customers"));
+        document.getElementById("refills-link").addEventListener("click", () => loadSection("refills"));
+        document.getElementById("inventory-link").addEventListener("click", () => loadSection("inventory"));
+        document.getElementById("reports-link").addEventListener("click", () => loadSection("reports"));
+    </script>
+</body>
+
+</html>
